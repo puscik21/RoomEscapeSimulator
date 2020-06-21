@@ -1,0 +1,78 @@
+body {
+    background-color: #555555;
+}
+
+.white-title {
+    text-align:center;
+    color:white;
+}
+
+.white {
+    text-align:center;
+    color:white;
+    font-size: 20px;
+}
+
+.button {
+    width: 100px;
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-top: 10px;
+}
+
+.colorAgendaRect {
+    margin-left: 5px;
+    margin-right: 30px;
+}
+
+#top-div {
+    margin-left: 30px;
+    margin-bottom: 20px;
+}
+
+#buttons-div {
+    float: left;
+}
+
+#cellsPerRow {
+    float: right;
+    margin-right: 50px;
+}
+
+#cells-per-row-label {
+    margin-left: 125px;
+    font-size: 20px;
+    color: white;
+}
+
+#colorAgenda {
+    margin-right: 250px;
+    float: right;
+    color: white;
+}
+
+#presentation-div {
+    clear: both;
+    float: left;
+    margin-left: 30px;
+}
+
+#board{
+    clear: both;
+    float:left;
+}
+
+#chart {
+    width: 600px;
+    height: 400px;
+    clear: both;
+    float:left;
+    margin-top: 50px;
+}
+
+#rules-table {
+    float: right;
+    margin-right: 30px;
+    background: #666666;
+    color: #dddddd;
+}

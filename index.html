@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Cellular Automaton - project</title>
+        <meta charset="utf-8" />
+        <link rel="stylesheet" href="style.css" type="text/css"/>
+        <script type="text/javascript" src="board.js"></script>
+        <script type="text/javascript" src="plotly.min.js"></script>
+    </head>
+<body>
+    <h1 class="white-title">1D Cellular automaton</h1>
+    <div>
+        <div id="top-div">
+            <div id="buttons-div">
+                <div id="cells-per-row-label">Cells per row <input type="text" id="cellsPerRow" name="fname"><br></div>
+                <input type="button" class="button" id="start" value="Start" onclick="start()">
+                <input type="button" class="button" id="pause" value="Pause" onclick="pause()">
+                <input type="button" class="button" id="clear" value="Clear" onclick="clearCanvas()">
+                <input type="button" class="button" id="randRule" value="Random rule" onclick="initRandomRule()">
+            </div>
+<!--            <div id="colorAgenda">-->
+<!--                <h2>0<canvas id="board0" class="colorAgendaRect" width="50" height="50"></canvas>-->
+<!--                1<canvas id="board1" class="colorAgendaRect" width="50" height="50"></canvas>-->
+<!--                2<canvas id="board2" class="colorAgendaRect" width="50" height="50"></canvas></h2>-->
+<!--            </div>-->
+        </div>
+        <div id="presentation-div">
+            <canvas id="board" width="1200" height="600"></canvas>
+            <div id="chart"></div>
+        </div>
+<!--        <div id="rules-table" class="rules-table">-->
+<!--            <table>-->
+<!--                <tr>-->
+<!--                    <th class="white">Rules</th>-->
+<!--                </tr>-->
+<!--            </table>-->
+<!--        </div>-->
+    </div>
+</body>
+</html>

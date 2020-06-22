@@ -18,6 +18,9 @@ var doorRow;
 var doorCol;
 var personTable;
 
+var rows;
+var cols;
+
 window.onload = function() {
     canvas = document.getElementById("board");
     context = canvas.getContext("2d");
@@ -33,52 +36,99 @@ window.onload = function() {
 
 function initRoom() {
     initRoomValues();
-    painRoomRectangles();
+    insertObstacles();
+    insertDoor();
+    paintRoomSquares();
 }
 
 function initRoomValues() {
-    let rowsCount = 600 / squareSize;   // TODO make them global
-    let colsCount = 1200 / squareSize;
-    roomValues = new Array(rowsCount);
+    rows = 600 / squareSize;
+    cols = 1200 / squareSize;
+    roomValues = new Array(rows);
 
-    for (let i = 0; i < rowsCount; i++) {
-        roomValues[i] = new Array(colsCount);
+    for (let i = 0; i < rows; i++) {
+        roomValues[i] = new Array(cols);
     }
 
     doorRow = (600 / squareSize) / 2;
     doorCol = (1200 / squareSize) - 1;
-    for (let row = 0; row < rowsCount; row++) {
-        for (let col = 0; col < colsCount; col++) {
-            if (row === 0 || row === rowsCount -1 || col === 0 || col === colsCount - 1) {
+    for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+            if (row === 0 || row === rows -1 || col === 0 || col === cols - 1) {
                 roomValues[row][col] = -1;
             } else {
                 roomValues[row][col] = getDistanceToDoor(row, col);
             }
         }
     }
-    insertDoor();
-}
-
-function getRectColor(rectValue) {
-    if (rectValue === -1) {
-        context.fillStyle = "#231f20";
-    } else {
-        context.fillStyle = "#ffffff";
-    }
 }
 
 function getDistanceToDoor(row, col) {
-    // rowValues[doorRow][doorCol] = 0;
-    let distance = Math.sqrt(Math.pow(doorRow - row, 2) + Math.pow(doorCol - col, 2));
+    return Math.sqrt(Math.pow(doorRow - row, 2) + Math.pow(doorCol - col, 2));
+}
 
-    return distance;
+function insertObstacles() {
+    for (let i = 0; i < 25; i++) {
+        let row = getRandomInt(rows - 2) + 1;
+        let col = getRandomInt(cols - 2) + 1;
+        insertSingleObstacle(row, col);
+    }
+
+    for (let i = 0; i < 25; i++) {
+        if (getRandomInt(2) === 0) {
+            insertVerticalObstacle();
+        } else {
+            insertHorizontalObstacle();
+        }
+    }
+}
+
+function insertSingleObstacle(obRow, obCol) {
+    for (let row = obRow - 1; row <= obRow + 1; row++) {
+        for (let col = obCol - 1; col <= obCol + 1; col++) {
+            if (roomValues[row][col] !== 0 && roomValues[row][col] !== -1) {
+                roomValues[row][col] = getDistanceToDoor(row, col);
+            }
+        }
+    }
+    roomValues[obRow][obCol] = -2;
+}
+
+function insertVerticalObstacle() {
+    let obRow = getRandomInt(rows - 3) + 1;
+    let obCol = getRandomInt(cols - 2) + 1;
+
+    for (let row = obRow - 1; row <= obRow + 2; row++) {
+        for (let col = obCol - 1; col <= obCol + 1; col++) {
+            if (roomValues[row][col] !== 0 && roomValues[row][col] !== -1) {
+                roomValues[row][col] = getDistanceToDoor(row, col);
+            }
+        }
+    }
+    roomValues[obRow][obCol] = -2;
+    roomValues[obRow + 1][obCol] = -2;
+}
+
+function insertHorizontalObstacle() {
+    let obRow = getRandomInt(rows - 2) + 1;
+    let obCol = getRandomInt(cols - 3) + 1;
+
+    for (let row = obRow - 1; row <= obRow + 1; row++) {
+        for (let col = obCol - 1; col <= obCol + 2; col++) {
+            if (roomValues[row][col] !== 0 && roomValues[row][col] !== -1) {
+                roomValues[row][col] = getDistanceToDoor(row, col);
+            }
+        }
+    }
+    roomValues[obRow][obCol] = -2;
+    roomValues[obRow][obCol + 1] = -2;
 }
 
 function insertDoor() {
     roomValues[doorRow][doorCol] = 0;
 }
 
-function painRoomRectangles() {
+function paintRoomSquares() {
     for (let row = 0; row < 600 / squareSize; row++) {
         for (let col = 0; col < 1200 / squareSize; col++) {
             let rectValue = roomValues[row][col];
@@ -91,23 +141,41 @@ function painRoomRectangles() {
     }
 }
 
+function getRectColor(rectValue) {
+    if (rectValue === -1) {
+        return "#231f20";
+    } else if (rectValue === -2) {
+        return "#ff0000";
+    } else {
+        return "#ffffff";
+    }
+}
+
 function initPersons() {
-    personTable = new Array();    // TODO length choosed by user
-    let person = {x: 5, y: 5, color: getRandomColor()};
-    personTable.push(person);
+    personTable = [];    // TODO length choosed by user
+    let freePositions = getFreePositions();
+    let numberOfPersons = Math.min(5, freePositions.length);   // TODO choosed by user
+
+    for (let i = 0; i < numberOfPersons; i++) {
+        let index = getRandomInt(freePositions.length);
+        let pos = freePositions[index];
+        freePositions.splice(index, 1);
+        let person = {col: pos.col, row: pos.row, color: getRandomColor()};
+        personTable.push(person);
+    }
     updatePersons();
 }
 
-function updatePersons() {
-    for (let i = 0; i < personTable.length; i++) {
-        let row = personTable[i].y;
-        let col = personTable[i].x;
-        context.fillStyle = personTable[i].color;
-        let xOffset = col * squareSize;
-        let yOffset = row * squareSize;
-        context.fillRect(xOffset, yOffset, squareSize, squareSize);
-        context.strokeRect(xOffset, yOffset, squareSize, squareSize);
+function getFreePositions() {
+    let freePositions = [];
+    for (let row = 1; row < rows - 1; row++) {
+        for (let col = 1; col < cols - 1; col++) {
+            if (roomValues[row][col] !== -2) {
+                freePositions.push({row: row, col: col});
+            }
+        }
     }
+    return freePositions;
 }
 
 function getRandomColor() {
@@ -119,6 +187,75 @@ function getRandomColor() {
     return color;
 }
 
+function updatePersons() {
+    paintRoomSquares();
+    for (let i = 0; i < personTable.length; i++) {
+        let row = personTable[i].row;
+        let col = personTable[i].col;
+        context.fillStyle = personTable[i].color;
+        let xOffset = col * squareSize;
+        let yOffset = row * squareSize;
+        context.fillRect(xOffset, yOffset, squareSize, squareSize);
+        context.strokeRect(xOffset, yOffset, squareSize, squareSize);
+    }
+}
+
+function step() {
+    calculatePersonsNewPositions();
+    updatePersons();
+
+    // updateChart();
+    if (!isPaused) {
+        timer = setTimeout(step, 500);
+    }
+}
+
+function calculatePersonsNewPositions() {
+    for (let i = 0; i < personTable.length; i++) {
+        let pRow = personTable[i].row;
+        let pCol = personTable[i].col;
+        if (roomValues[pRow][pCol] === 0) {
+            personTable.splice(i, 1);
+            continue;
+        }
+        let newPos = findNearestPosition(pRow, pCol);
+        personTable[i].row = newPos.row;
+        personTable[i].col = newPos.col;
+    }
+}
+
+function findNearestPosition(pRow, pCol) {
+    let minRow = Math.max(pRow - 1, 0);
+    let maxRow = Math.min(pRow + 1, rows - 1);
+
+    let minCol = Math.max(pCol - 1, 0);
+    let maxCol = Math.min(pCol + 1, cols - 1);
+
+    let minValue = 100000;
+    let minPos = {col: 0, row: 0};
+    for (let row = minRow; row <= maxRow; row++) {
+        for (let col = minCol; col <= maxCol; col++) {
+            let posValue = roomValues[row][col];
+            if (posValue < minValue && posValue >= 0) {
+                minValue = posValue;
+                minPos = {col, row};
+            }
+        }
+    }
+    return minPos;
+}
+
+// ### start button ###
+function start() {
+    if (isPaused && document.getElementById('cellsPerRow').value !== '') {
+        cellsPerRow = document.getElementById('cellsPerRow').value;
+        if (rowValues == null) {
+            initRowValues();
+        }
+        timer = setTimeout(step, 500);
+        isPaused = false;
+    }
+}
 
 // ######## OLD ###############
 
@@ -247,18 +384,6 @@ function initChart() {
         title: 'Quantity of each color in row'
     };
     Plotly.newPlot('chart', data, layout);
-}
-
-// ### start button ###
-function start() {
-    if (isPaused && document.getElementById('cellsPerRow').value !== '') {
-        cellsPerRow = document.getElementById('cellsPerRow').value;
-        if (rowValues == null) {
-            initRowValues();
-        }
-        timer = setTimeout(drawLine, 500);
-        isPaused = false;
-    }
 }
 
 function initRowValues() {

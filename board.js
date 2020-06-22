@@ -11,6 +11,12 @@ var rulesTable;
 var presSquareSize = 50;
 var chartCount = 0;
 
+// new vars
+var roomValues;
+var squareSize = 50;  // TODO based on user choice
+var doorRow;
+var doorCol;
+
 window.onload = function() {
     canvas = document.getElementById("board");
     context = canvas.getContext("2d");
@@ -24,42 +30,68 @@ window.onload = function() {
 };
 
 function initRoom() {
-    const squareSize = 100;      // TODO based on user choice?
+    initRoomValues();
+    painRoomRectangles();
+}
 
-    for (let i = 0; i < 600 / squareSize; i++) {
-        for (let j = 0; j < 1200 / squareSize; j++) {
-            context.fillStyle = "#ffffff";
-            let xOffset = j * squareSize;
-            let yOffset = i * squareSize;
-            context.fillRect(xOffset, yOffset, squareSize, squareSize);
-            context.strokeRect(xOffset, yOffset, squareSize, squareSize);   // draw border around the cell
-            context.font = "30px Arial";
-            context.fillText("Hello there", 200, 100);
-        }
+function initRoomValues() {
+    let rowsCount = 600 / squareSize;   // TODO make them global
+    let colsCount = 1200 / squareSize;
+    roomValues = new Array(rowsCount);
+
+    for (let i = 0; i < rowsCount; i++) {
+        roomValues[i] = new Array(colsCount);
     }
 
-    // const squareSize = canvas.width / cellsPerRow;
-    // if ((currentRow + 1) * squareSize < canvas.height) {
-    //     currentRow++;
-    // } else {
-    //     let data = context.getImageData(0, squareSize, canvas.width, canvas.height);
-    //     context.putImageData(data, 0, 0);
-    // }
-    //
-    // for (let i = 0; i < rowValues.length; i++) {
-    //     context.fillStyle = getColorForValue(rowValues[i]);
-    //     let xOffset = i * squareSize;
-    //     let yOffset = currentRow * squareSize;
-    //     context.fillRect(xOffset, yOffset, squareSize, squareSize);
-    //     context.strokeRect(xOffset, yOffset, squareSize, squareSize);   // draw border around the cell
-    // }
-    // updateChart();
-    // calculateNextRowValues();
-    //
-    // if (!isPaused) {
-    //     timer = setTimeout(drawLine, 500);
-    // }
+    doorRow = (600 / squareSize) / 2;
+    doorCol = (1200 / squareSize) - 1;
+    for (let row = 0; row < rowsCount; row++) {
+        for (let col = 0; col < colsCount; col++) {
+            if (row === 0 || row === rowsCount -1 || col === 0 || col === colsCount - 1) {
+                roomValues[row][col] = -1;
+            } else {
+                roomValues[row][col] = getDistanceToDoor(row, col);
+            }
+        }
+    }
+    insertDoor();
 }
+
+function getRectColor(rectValue) {
+    if (rectValue === -1) {
+        context.fillStyle = "#231f20";
+    } else {
+        context.fillStyle = "#ffffff";
+    }
+}
+
+function getDistanceToDoor(row, col) {
+    // rowValues[doorRow][doorCol] = 0;
+    let distance = Math.sqrt(Math.pow(doorRow - row, 2) + Math.pow(doorCol - col, 2));
+
+    return distance;
+}
+
+function insertDoor() {
+    roomValues[doorRow][doorCol] = 0;
+}
+
+function painRoomRectangles() {
+    for (let row = 0; row < 600 / squareSize; row++) {
+        for (let col = 0; col < 1200 / squareSize; col++) {
+            let rectValue = roomValues[row][col];
+            context.fillStyle = getRectColor(rectValue);
+            let xOffset = col * squareSize;
+            let yOffset = row * squareSize;
+            context.fillRect(xOffset, yOffset, squareSize, squareSize);
+            context.strokeRect(xOffset, yOffset, squareSize, squareSize);   // draw border around the cell
+        }
+    }
+}
+
+
+
+// ######## OLD ###############
 
 function initColorAgenda() {
     for (let i = 0; i < 3; i++) {

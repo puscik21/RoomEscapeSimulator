@@ -16,6 +16,7 @@ var roomValues;
 var squareSize = 50;  // TODO based on user choice
 var doorRow;
 var doorCol;
+var personTable;
 
 window.onload = function() {
     canvas = document.getElementById("board");
@@ -27,6 +28,7 @@ window.onload = function() {
     initChart();
 
     initRoom();
+    initPersons();
 };
 
 function initRoom() {
@@ -84,11 +86,38 @@ function painRoomRectangles() {
             let xOffset = col * squareSize;
             let yOffset = row * squareSize;
             context.fillRect(xOffset, yOffset, squareSize, squareSize);
-            context.strokeRect(xOffset, yOffset, squareSize, squareSize);   // draw border around the cell
+            context.strokeRect(xOffset, yOffset, squareSize, squareSize);
         }
     }
 }
 
+function initPersons() {
+    personTable = new Array();    // TODO length choosed by user
+    let person = {x: 5, y: 5, color: getRandomColor()};
+    personTable.push(person);
+    updatePersons();
+}
+
+function updatePersons() {
+    for (let i = 0; i < personTable.length; i++) {
+        let row = personTable[i].y;
+        let col = personTable[i].x;
+        context.fillStyle = personTable[i].color;
+        let xOffset = col * squareSize;
+        let yOffset = row * squareSize;
+        context.fillRect(xOffset, yOffset, squareSize, squareSize);
+        context.strokeRect(xOffset, yOffset, squareSize, squareSize);
+    }
+}
+
+function getRandomColor() {
+    let letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+}
 
 
 // ######## OLD ###############

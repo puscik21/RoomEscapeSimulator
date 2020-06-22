@@ -17,9 +17,10 @@ var squareSize = 50;  // TODO based on user choice
 var doorRow;
 var doorCol;
 var personTable;
-
 var rows;
 var cols;
+
+var usedPositions;
 
 window.onload = function() {
     canvas = document.getElementById("board");
@@ -36,7 +37,7 @@ window.onload = function() {
 
 function initRoom() {
     initRoomValues();
-    insertObstacles();
+    // insertObstacles();
     insertDoor();
     paintRoomSquares();
 }
@@ -153,15 +154,27 @@ function getRectColor(rectValue) {
 
 function initPersons() {
     personTable = [];    // TODO length choosed by user
+    usedPositions = new Array(rows);
+    for (let i = 0; i < rows; i++) {        // todo merge fores
+        usedPositions[i] = new Array(cols);
+    }
+    for (let row = 1; row < rows - 1; row++) {
+        for (let col = 1; col < cols - 1; col++) {
+            usedPositions[row][col] = 0;
+        }
+    }
+
     let freePositions = getFreePositions();
-    let numberOfPersons = Math.min(5, freePositions.length);   // TODO choosed by user
+    let numberOfPersons = Math.min(300, freePositions.length);   // TODO choosed by user
 
     for (let i = 0; i < numberOfPersons; i++) {
         let index = getRandomInt(freePositions.length);
         let pos = freePositions[index];
         freePositions.splice(index, 1);
-        let person = {col: pos.col, row: pos.row, color: getRandomColor()};
+        let person = {col: pos.col, row: pos.row, color: "#3366DD"};    // TODO only for tests (or as option selected by user)
+        // let person = {col: pos.col, row: pos.row, color: getRandomColor()};
         personTable.push(person);
+        usedPositions[person.row][person.col] = 1;
     }
     updatePersons();
 }
@@ -188,6 +201,7 @@ function getRandomColor() {
 }
 
 function updatePersons() {
+    updateHTMLPersonsNumbers();
     paintRoomSquares();
     for (let i = 0; i < personTable.length; i++) {
         let row = personTable[i].row;
@@ -200,45 +214,65 @@ function updatePersons() {
     }
 }
 
+function updateHTMLPersonsNumbers() {
+    document.getElementById("peopleInside").innerHTML = personTable.length;
+}
+
 function step() {
     calculatePersonsNewPositions();
     updatePersons();
 
     // updateChart();
     if (!isPaused) {
-        timer = setTimeout(step, 500);
+        timer = setTimeout(step, 1500);
     }
 }
 
 function calculatePersonsNewPositions() {
+    let newUsedPositions = new Array(rows);
+    for (let i = 0; i < rows; i++) {        // TODO special function
+        newUsedPositions[i] = new Array(cols);
+    }
+    for (let row = 1; row < rows - 1; row++) {
+        for (let col = 1; col < cols - 1; col++) {
+            newUsedPositions[row][col] = 0;
+        }
+    }
+
+
     for (let i = 0; i < personTable.length; i++) {
         let pRow = personTable[i].row;
         let pCol = personTable[i].col;
         if (roomValues[pRow][pCol] === 0) {
             personTable.splice(i, 1);
+            let numberOfSurvivors = document.getElementById("peopleThatEscaped").innerHTML;
+            document.getElementById("peopleThatEscaped").innerHTML = "" + (Number(numberOfSurvivors) + 1);
+            i--;
             continue;
         }
-        let newPos = findNearestPosition(pRow, pCol);
+        let newPos = findNearestPosition(pRow, pCol, newUsedPositions);
         personTable[i].row = newPos.row;
         personTable[i].col = newPos.col;
+        newUsedPositions[newPos.row][newPos.col] = 1;
     }
+    usedPositions = newUsedPositions;
 }
 
-function findNearestPosition(pRow, pCol) {
+function findNearestPosition(pRow, pCol, newUsedPositions) {
     let minRow = Math.max(pRow - 1, 0);
     let maxRow = Math.min(pRow + 1, rows - 1);
 
     let minCol = Math.max(pCol - 1, 0);
     let maxCol = Math.min(pCol + 1, cols - 1);
 
-    let minValue = 100000;
-    let minPos = {col: 0, row: 0};
+    let minValue = roomValues[pRow][pCol];
+    let minPos = {row: pRow, col: pCol};
     for (let row = minRow; row <= maxRow; row++) {
         for (let col = minCol; col <= maxCol; col++) {
             let posValue = roomValues[row][col];
-            if (posValue < minValue && posValue >= 0) {
+            if (posValue < minValue && posValue >= 0 && usedPositions[row][col] !== 1 && newUsedPositions[row][col] !== 1) {
                 minValue = posValue;
-                minPos = {col, row};
+                minPos = {row: row, col: col};
             }
         }
     }
@@ -275,7 +309,7 @@ function initStrokeOfBoard() {
 }
 
 function initRulesTable() {
-    let parent = document.getElementById('rules-table');
+    let parent = document.getElementById('personsNumbers');
     while(parent.hasChildNodes()) {
         parent.removeChild(parent.firstChild);
     }

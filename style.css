@@ -70,9 +70,9 @@ body {
     margin-top: 50px;
 }
 
-#rules-table {
+#personsNumbers {
     float: right;
     margin-right: 30px;
-    background: #666666;
+    /*background: #666666;*/
     color: #dddddd;
 }

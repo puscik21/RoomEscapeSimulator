@@ -37,7 +37,7 @@ window.onload = function() {
 
 function initRoom() {
     initRoomValues();
-    // insertObstacles();
+    insertObstacles();
     insertDoor();
     paintRoomSquares();
 }
@@ -165,7 +165,7 @@ function initPersons() {
     }
 
     let freePositions = getFreePositions();
-    let numberOfPersons = Math.min(300, freePositions.length);   // TODO choosed by user
+    let numberOfPersons = Math.min(50, freePositions.length);   // TODO choosed by user
 
     for (let i = 0; i < numberOfPersons; i++) {
         let index = getRandomInt(freePositions.length);
@@ -228,6 +228,7 @@ function step() {
     }
 }
 
+// TODO refactor
 function calculatePersonsNewPositions() {
     let newUsedPositions = new Array(rows);
     for (let i = 0; i < rows; i++) {        // TODO special function
@@ -238,45 +239,94 @@ function calculatePersonsNewPositions() {
             newUsedPositions[row][col] = 0;
         }
     }
-
-
+    let personsTempTable = [];
     for (let i = 0; i < personTable.length; i++) {
-        let pRow = personTable[i].row;
-        let pCol = personTable[i].col;
-        if (roomValues[pRow][pCol] === 0) {
-            personTable.splice(i, 1);
+        let value = roomValues[personTable[i].row][personTable[i].col];
+        personsTempTable[i] = {row: personTable[i].row, col: personTable[i].col, val: value, index: i};
+    }
+
+    let indexToRemove = -1;
+    for (let i = 0; i < personsTempTable.length; i++) {
+        let personIndex = personsTempTable[i].index;
+        if (roomValues[personsTempTable[i].row][personsTempTable[i].col] === 0) {
+            personsTempTable.splice(i, 1);
+            indexToRemove = personIndex;
             let numberOfSurvivors = document.getElementById("peopleThatEscaped").innerHTML;
             document.getElementById("peopleThatEscaped").innerHTML = "" + (Number(numberOfSurvivors) + 1);
             i--;
             continue;
         }
-        let newPos = findNearestPosition(pRow, pCol, newUsedPositions);
-        personTable[i].row = newPos.row;
-        personTable[i].col = newPos.col;
+
+        let actualValue = roomValues[personsTempTable[i].row][personsTempTable[i].col];
+        let actualPosition = {row: personsTempTable[i].row, col: personsTempTable[i].col, val: actualValue};
+        let newPos = tryToFindSimpleDirection(actualPosition, newUsedPositions);
+        if (newPos.val < actualValue) {
+            personsTempTable.splice(i, 1);
+            i--;
+        }
+        personTable[personIndex].row = newPos.row;
+        personTable[personIndex].col = newPos.col;
         newUsedPositions[newPos.row][newPos.col] = 1;
+    }
+
+    for (let i = 0; i < personsTempTable.length; i++) {
+        let personIndex = personsTempTable[i].index;
+
+        let actualValue = roomValues[personsTempTable[i].row][personsTempTable[i].col];
+        let actualPosition = {row: personsTempTable[i].row, col: personsTempTable[i].col, val: actualValue};
+        let newPos = tryToFindDiagonalDirection(actualPosition, newUsedPositions);
+        if (newPos.val < actualValue) {
+            personsTempTable.splice(i, 1);
+            i--;
+        }
+        personTable[personIndex].row = newPos.row;
+        personTable[personIndex].col = newPos.col;
+        newUsedPositions[newPos.row][newPos.col] = 1;
+    }
+
+    if (indexToRemove !== -1) {
+        personTable.splice(indexToRemove, 1);
     }
     usedPositions = newUsedPositions;
 }
 
-function findNearestPosition(pRow, pCol, newUsedPositions) {
-    let minRow = Math.max(pRow - 1, 0);
-    let maxRow = Math.min(pRow + 1, rows - 1);
+function tryToFindSimpleDirection(actualPosition, newUsedPositions) {
+    let newPositions = [];
+    newPositions.push(checkPosition(actualPosition.row, actualPosition.col - 1, actualPosition.val, newUsedPositions));
+    newPositions.push(checkPosition(actualPosition.row, actualPosition.col + 1, actualPosition.val, newUsedPositions));
+    newPositions.push(checkPosition(actualPosition.row - 1, actualPosition.col, actualPosition.val, newUsedPositions));
+    newPositions.push(checkPosition(actualPosition.row + 1, actualPosition.col, actualPosition.val, newUsedPositions));
 
-    let minCol = Math.max(pCol - 1, 0);
-    let maxCol = Math.min(pCol + 1, cols - 1);
-
-    let minValue = roomValues[pRow][pCol];
-    let minPos = {row: pRow, col: pCol};
-    for (let row = minRow; row <= maxRow; row++) {
-        for (let col = minCol; col <= maxCol; col++) {
-            let posValue = roomValues[row][col];
-            if (posValue < minValue && posValue >= 0 && usedPositions[row][col] !== 1 && newUsedPositions[row][col] !== 1) {
-                minValue = posValue;
-                minPos = {row: row, col: col};
-            }
+    for (let i = 0; i < newPositions.length; i++) {
+        if (newPositions[i] != null && newPositions[i].val < actualPosition.val) {
+            actualPosition = newPositions[i];
         }
     }
-    return minPos;
+    return actualPosition;
+}
+
+function tryToFindDiagonalDirection(actualPosition, newUsedPositions) {
+    let newPositions = [];
+    newPositions.push(checkPosition(actualPosition.row - 1, actualPosition.col - 1, actualPosition.val, newUsedPositions));
+    newPositions.push(checkPosition(actualPosition.row - 1, actualPosition.col + 1, actualPosition.val, newUsedPositions));
+    newPositions.push(checkPosition(actualPosition.row + 1, actualPosition.col - 1, actualPosition.val, newUsedPositions));
+    newPositions.push(checkPosition(actualPosition.row + 1, actualPosition.col + 1, actualPosition.val, newUsedPositions));
+
+    for (let i = 0; i < newPositions.length; i++) {
+        if (newPositions[i] != null && newPositions[i].val < actualPosition.val) {
+            actualPosition = newPositions[i];
+        }
+    }
+    return actualPosition;
+}
+
+function checkPosition(row, col, actualValue, newUsedPositions) {
+    let posValue = roomValues[row][col];
+    if (posValue < actualValue && posValue >= 0 && usedPositions[row][col] !== 1 && newUsedPositions[row][col] !== 1) {
+        return {row: row, col: col, val: posValue};
+    } else {
+        return null;
+    }
 }
 
 // ### start button ###

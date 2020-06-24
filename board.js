@@ -19,8 +19,11 @@ var doorCol;
 var personTable;
 var rows;
 var cols;
-
 var usedPositions;
+
+var startPersonsNumber;
+var numberOfSurvivors = 0;
+
 
 window.onload = function() {
     canvas = document.getElementById("board");
@@ -30,9 +33,9 @@ window.onload = function() {
     initRulesMap();
     // initRulesTable();
     initChart();
-
     initRoom();
     initPersons();
+    initListeners();
 };
 
 function initRoom() {
@@ -166,7 +169,7 @@ function initPersons() {
     }
 
     let freePositions = getFreePositions();
-    let numberOfPersons = Math.min(50, freePositions.length);   // TODO choosed by user
+    let numberOfPersons = Math.min(startPersonsNumber, freePositions.length);
 
 
     // // test purposes
@@ -232,11 +235,18 @@ function updateHTMLPersonsNumbers() {
     document.getElementById("peopleInside").innerHTML = personTable.length;
 }
 
+function initListeners() {
+    document.getElementById('personsSlider').max = 200; // TODO based on user choice of room size
+    document.getElementById('personsSlider').addEventListener("input", function () {
+        apply();
+    });
+}
+
 function step() {
     calculatePersonsNewPositions();
     updatePersons();
 
-    // updateChart();
+    updateChart();
     if (!isPaused) {
         timer = setTimeout(step, 1500);
     }
@@ -268,8 +278,8 @@ function calculatePersonsNewPositions() {
         if (roomValues[personsTempTable[i].row][personsTempTable[i].col] === 0) {
             personsTempTable.splice(i, 1);
             indexToRemove = personIndex;
-            let numberOfSurvivors = document.getElementById("peopleThatEscaped").innerHTML;
-            document.getElementById("peopleThatEscaped").innerHTML = "" + (Number(numberOfSurvivors) + 1);
+            numberOfSurvivors++;
+            document.getElementById("peopleThatEscaped").innerHTML = '' + numberOfSurvivors;
             i--;
             continue;
         } else if (personTable[personIndex].tries > 1) {
@@ -380,13 +390,15 @@ function checkPosition(row, col, actualValue, newUsedPositions) {
 // ### start button ###
 function start() {
     if (isPaused && document.getElementById('cellsPerRow').value !== '') {
-        cellsPerRow = document.getElementById('cellsPerRow').value;
-        if (rowValues == null) {
-            initRowValues();
-        }
         timer = setTimeout(step, 500);
         isPaused = false;
     }
+}
+
+function apply() {
+    startPersonsNumber = document.getElementById('personsSlider').value;
+    document.getElementById('startNumberOfPeopleLabel').innerHTML = "Start number of people: " + startPersonsNumber;
+    initPersons();
 }
 
 // ######## OLD ###############
@@ -481,39 +493,29 @@ function changeRuleCanvasResult(canvasId, ruleNumber, newResultValue) {
 }
 
 function initChart() {
-    let traceRed = {
+    let traceIn = {
         y: [0],
         mode: 'lines',
-        name: 'Red',
+        name: 'In',
         line: {
-            color: 'rgb(209, 46, 81)',
+            color: 'rgb(255, 31, 34)',
             width: 5
         }
     };
 
-    let traceGreen = {
+    let traceOut = {
         y: [0],
         mode: 'lines',
-        name: 'Green',
+        name: 'Outside',
         line: {
-            color: 'rgb(219, 196, 48)',
+            color: 'rgb(2, 230, 48)',
             width: 5
         }
     };
 
-    let traceBlue = {
-        y: [0],
-        mode: 'lines',
-        name: 'Blue',
-        line: {
-            color: 'rgb(47, 133, 209)',
-            width: 5
-        }
-    };
-
-    let data = [traceRed, traceGreen, traceBlue];
+    let data = [traceIn, traceOut];
     let layout = {
-        title: 'Quantity of each color in row'
+        title: 'People in and out'
     };
     Plotly.newPlot('chart', data, layout);
 }
@@ -574,9 +576,8 @@ function getColorForValue(value) {
 }
 
 function updateChart() {
-    Plotly.extendTraces('chart', {y: [[countFields(0)]]}, [0]);
-    Plotly.extendTraces('chart', {y: [[countFields(1)]]}, [1]);
-    Plotly.extendTraces('chart', {y: [[countFields(2)]]}, [2]);
+    Plotly.extendTraces('chart', {y: [[personTable.length]]}, [0]);
+    Plotly.extendTraces('chart', {y: [[numberOfSurvivors]]}, [1]);
     chartCount++;
     if (chartCount > 50) {
         Plotly.relayout('chart', {
@@ -585,16 +586,6 @@ function updateChart() {
             }
         });
     }
-}
-
-function countFields(value) {
-    let count = 0;
-    for (let i = 0; i < rowValues.length; i++) {
-        if (rowValues[i] === value) {
-            count++;
-        }
-    }
-    return count;
 }
 
 function calculateNextRowValues() {

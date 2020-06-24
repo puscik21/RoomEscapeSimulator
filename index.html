@@ -17,6 +17,7 @@
                 <input type="button" class="button" id="pause" value="Pause" onclick="pause()">
                 <input type="button" class="button" id="clear" value="Clear" onclick="clearCanvas()">
                 <input type="button" class="button" id="randRule" value="Random rule" onclick="initRandomRule()">
+                <input type="button" class="button" id="apply" value="Apply" onclick="apply()">
             </div>
 <!--            <div id="colorAgenda">-->
 <!--                <h2>0<canvas id="board0" class="colorAgendaRect" width="50" height="50"></canvas>-->
@@ -37,13 +38,20 @@
                     <td><h1 id="peopleInside"></h1></td>
                 </tr>
                 <tr>
-                    <th height="150px"></th>
+                    <th height="15px"></th>
                 </tr>
                 <tr>
                     <th>People that escaped: </th>
                 </tr>
                 <tr>
                     <td><h1 id="peopleThatEscaped">0</h1></td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <p id="startNumberOfPeopleLabel">Start number of people: </p>
+                        <input id="personsSlider" type="range" min="1" max="100" value="50" width="100%"/>
+                    </td>
                 </tr>
             </table>
         </div>

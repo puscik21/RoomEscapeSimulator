@@ -25,6 +25,7 @@ var numberOfSurvivors = 0;
 var areListenersEnabled = true;
 var maxPersonsInside;
 var stepTime;
+var personsHaveSingleColor = false;
 
 window.onload = function() {
     canvas = document.getElementById("board");
@@ -191,8 +192,8 @@ function initPersons() {
         let index = getRandomInt(freePositions.length);
         let pos = freePositions[index];
         freePositions.splice(index, 1);
-        let person = {col: pos.col, row: pos.row, color: "#3366DD"};    // TODO only for tests (or as option selected by user)
-        // let person = {col: pos.col, row: pos.row, color: getRandomColor()};
+        // let person = {col: pos.col, row: pos.row, color: "#3366DD"};    // TODO only for tests (or as option selected by user)
+        let person = {col: pos.col, row: pos.row, color: getRandomColor()};
         personTable.push(person);
         usedPositions[person.row][person.col] = 1;
     }
@@ -226,7 +227,11 @@ function updatePersons() {
     for (let i = 0; i < personTable.length; i++) {
         let row = personTable[i].row;
         let col = personTable[i].col;
-        context.fillStyle = personTable[i].color;
+        if (personsHaveSingleColor) {
+            context.fillStyle = "#3366DD";
+        } else {
+            context.fillStyle = personTable[i].color;
+        }
         let xOffset = col * squareSize;
         let yOffset = row * squareSize;
         context.fillRect(xOffset, yOffset, squareSize, squareSize);
@@ -252,6 +257,10 @@ function initListeners() {
     });
     document.getElementById('stepTimeSlider').addEventListener("input", function () {
         updateStepTime();
+    });
+    document.getElementById('SingleColorBox').addEventListener("click", function () {
+        personsHaveSingleColor = document.getElementById('SingleColorBox').checked;
+        updatePersons();
     });
 }
 

@@ -26,7 +26,7 @@ var stepTime;
 var personsHaveSingleColor = false;
 var doorPositions;
 var inFrontOfDoorSpaces;
-var doorsToUse = 4;
+var doorsToUse;
 
 window.onload = function() {
     canvas = document.getElementById("board");
@@ -36,8 +36,8 @@ window.onload = function() {
     initRulesMap();
     // initRulesTable();
     initChart();
-    initRoom();
     initListeners();
+    initRoom();
     initPersons();
 };
 
@@ -276,6 +276,7 @@ function initListeners() {
     startPersonsNumber = document.getElementById('personsSlider').value;
     document.getElementById('personsSlider').max = maxPersonsInside;
     stepTime = document.getElementById('stepTimeSlider').value;
+    doorsToUse = document.getElementById('numberOfDoorsSlider').value;
     initSlidersLabels();
 
     document.getElementById('personsSlider').addEventListener("input", function () {
@@ -286,6 +287,9 @@ function initListeners() {
     });
     document.getElementById('stepTimeSlider').addEventListener("input", function () {
         updateStepTime();
+    });
+    document.getElementById('numberOfDoorsSlider').addEventListener("input", function () {
+        updateDoorsToUse();
     });
     document.getElementById('SingleColorBox').addEventListener("click", function () {
         personsHaveSingleColor = document.getElementById('SingleColorBox').checked;
@@ -447,6 +451,7 @@ function initSlidersLabels() {
     document.getElementById('startNumberOfPeopleLabel').innerHTML = "Start number of people: " + document.getElementById('personsSlider').value;
     document.getElementById('squareSizeLabel').innerHTML = "Square size: " + document.getElementById('squareSizeSlider').value;
     document.getElementById('stepTimeLabel').innerHTML = "Step time: " + document.getElementById('stepTimeSlider').value;
+    document.getElementById('numberOfDoorsLabel').innerHTML = "Number of doors: " + document.getElementById('numberOfDoorsSlider').value;
 }
 
 function updateStartPersonsNumber() {
@@ -472,6 +477,15 @@ function updateSquareSize() {
 function updateStepTime() {
     stepTime = document.getElementById('stepTimeSlider').value;
     document.getElementById('stepTimeLabel').innerHTML = "Step time: " + stepTime;
+}
+
+function updateDoorsToUse() {
+    if (areListenersEnabled) {
+        doorsToUse = document.getElementById('numberOfDoorsSlider').value;
+        document.getElementById('numberOfDoorsLabel').innerHTML = "Number of doors: " + doorsToUse;
+        initRoom();
+        initPersons();
+    }
 }
 
 // ######## OLD ###############

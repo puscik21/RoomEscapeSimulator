@@ -24,7 +24,7 @@ var startPersonsNumber;
 var numberOfSurvivors = 0;
 var areListenersEnabled = true;
 var maxPersonsInside;
-
+var stepTime;
 
 window.onload = function() {
     canvas = document.getElementById("board");
@@ -241,11 +241,17 @@ function updateHTMLPersonsNumbers() {
 function initListeners() {
     startPersonsNumber = document.getElementById('personsSlider').value;
     document.getElementById('personsSlider').max = maxPersonsInside;
+    stepTime = document.getElementById('stepTimeSlider').value;
+    initSlidersLabels();
+
     document.getElementById('personsSlider').addEventListener("input", function () {
         updateStartPersonsNumber();
     });
     document.getElementById('squareSizeSlider').addEventListener("input", function () {
         updateSquareSize();
+    });
+    document.getElementById('stepTimeSlider').addEventListener("input", function () {
+        updateStepTime();
     });
 }
 
@@ -255,7 +261,7 @@ function step() {
 
     updateChart();
     if (!isPaused) {
-        timer = setTimeout(step, 1500);
+        timer = setTimeout(step, stepTime);
     }
 }
 
@@ -397,10 +403,16 @@ function checkPosition(row, col, actualValue, newUsedPositions) {
 // ### start button ###
 function start() {
     if (isPaused && document.getElementById('cellsPerRow').value !== '') {      // TODO probably nothing to check in textBox
-        timer = setTimeout(step, 500);
+        timer = setTimeout(step, stepTime);
         isPaused = false;
         areListenersEnabled = false;
     }
+}
+
+function initSlidersLabels() {
+    document.getElementById('startNumberOfPeopleLabel').innerHTML = "Start number of people: " + document.getElementById('personsSlider').value;
+    document.getElementById('squareSizeLabel').innerHTML = "Square size: " + document.getElementById('squareSizeSlider').value;
+    document.getElementById('stepTimeLabel').innerHTML = "Step time: " + document.getElementById('stepTimeSlider').value;
 }
 
 function updateStartPersonsNumber() {
@@ -421,6 +433,11 @@ function updateSquareSize() {
             initPersons();
         }
     }
+}
+
+function updateStepTime() {
+    stepTime = document.getElementById('stepTimeSlider').value;
+    document.getElementById('stepTimeLabel').innerHTML = "Step time: " + stepTime;
 }
 
 // ######## OLD ###############

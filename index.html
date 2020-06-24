@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Cellular Automaton - project</title>
+        <title>Room escape simulation - project</title>
         <meta charset="utf-8" />
         <link rel="stylesheet" href="style.css" type="text/css"/>
         <script type="text/javascript" src="board.js"></script>
         <script type="text/javascript" src="plotly.min.js"></script>
     </head>
 <body>
-    <h1 class="white-title">1D Cellular automaton</h1>
+    <h1 class="white-title">Room escape simulation</h1>
     <div>
         <div id="top-div">
             <div id="buttons-div">
@@ -31,18 +31,15 @@
         </div>
         <div id="personsNumbers" class="rules-table">
             <table class="white">
-                <tr>
-                    <th>People inside: </th>
-                </tr>
+                <th>People inside: </th>
                 <tr>
                     <td><h1 id="peopleInside"></h1></td>
                 </tr>
                 <tr>
-                    <th height="15px"></th>
+                    <td height="15px"></td>
                 </tr>
-                <tr>
-                    <th>People that escaped: </th>
-                </tr>
+
+                <th>People that escaped: </th>
                 <tr>
                     <td><h1 id="peopleThatEscaped">0</h1></td>
                 </tr>

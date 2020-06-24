@@ -14,8 +14,6 @@ var chartCount = 0;
 // new vars
 var roomValues;
 var squareSize = 50;  // TODO based on user choice
-var doorRow;
-var doorCol;
 var personTable;
 var rows;
 var cols;
@@ -26,6 +24,9 @@ var areListenersEnabled = true;
 var maxPersonsInside;
 var stepTime;
 var personsHaveSingleColor = false;
+var doorPositions;
+var inFrontOfDoorSpaces;
+var doorsToUse = 4;
 
 window.onload = function() {
     canvas = document.getElementById("board");
@@ -48,16 +49,29 @@ function initRoom() {
 }
 
 function initRoomValues() {
-    rows = 600 / squareSize;
-    cols = 1200 / squareSize;
+    rows = document.getElementById("board").height / squareSize;
+    cols = document.getElementById("board").width / squareSize;
     roomValues = new Array(rows);
 
     for (let i = 0; i < rows; i++) {
         roomValues[i] = new Array(cols);
     }
 
-    doorRow = Math.floor(600 / squareSize / 2);
-    doorCol = Math.floor(1200 / squareSize - 1);
+    // doors initialization - sadly hardcoded
+    doorPositions = [];
+    inFrontOfDoorSpaces = [];
+    doorPositions.push({row: Math.floor(rows / 2), col: Math.floor(cols - 1)});
+    inFrontOfDoorSpaces.push({row: doorPositions[0].row, col: doorPositions[0].col - 1});
+
+    doorPositions.push({row: Math.floor(rows - 1), col: Math.floor(cols / 2)});
+    inFrontOfDoorSpaces.push({row: doorPositions[1].row - 1, col: doorPositions[1].col});
+
+    doorPositions.push({row: Math.floor(0), col: Math.floor(cols / 2)});
+    inFrontOfDoorSpaces.push({row: doorPositions[2].row + 1, col: doorPositions[2].col});
+
+    doorPositions.push({row: Math.floor(rows / 2), col: Math.floor(0)});
+    inFrontOfDoorSpaces.push({row: doorPositions[3].row, col: doorPositions[3].col + 1});
+
     for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
             if (row === 0 || row === rows -1 || col === 0 || col === cols - 1) {
@@ -70,7 +84,16 @@ function initRoomValues() {
 }
 
 function getDistanceToDoor(row, col) {
-    return Math.sqrt(Math.pow(doorRow - row, 2) + Math.pow(doorCol - col, 2));
+    let minDistance = 100000;
+    for (let i = 0; i < doorsToUse; i++) {
+        let doorRow = doorPositions[i].row;
+        let doorCol = doorPositions[i].col;
+        let distance = Math.sqrt(Math.pow(doorRow - row, 2) + Math.pow(doorCol - col, 2));
+        if (distance < minDistance) {
+            minDistance = distance;
+        }
+    }
+    return minDistance;
 }
 
 function insertObstacles() {
@@ -131,8 +154,14 @@ function insertHorizontalObstacle() {
 }
 
 function insertDoor() {
-    roomValues[doorRow][doorCol] = 0;
-    roomValues[doorRow][doorCol - 1] = getDistanceToDoor(doorRow, doorCol - 1);
+    for (let i = 0; i < doorsToUse; i++) {
+        let doorRow = doorPositions[i].row;
+        let doorCol = doorPositions[i].col;
+        let spaceRow = inFrontOfDoorSpaces[i].row;
+        let spaceCol = inFrontOfDoorSpaces[i].col;
+        roomValues[doorRow][doorCol] = 0;
+        roomValues[spaceRow][spaceCol - 1] = getDistanceToDoor(spaceRow, spaceCol - 1);
+    }
 }
 
 function paintRoomSquares() {
@@ -291,18 +320,17 @@ function calculatePersonsNewPositions() {
         personsTempTable[i] = {row: personTable[i].row, col: personTable[i].col, val: value, index: i};
     }
 
-    let indexToRemove = -1;
-    for (let i = 0; i < personsTempTable.length; i++) {
+    let indexesToRemove = [];
+    for (let i = personsTempTable.length - 1; i >= 0; i--) {
         let personIndex = personsTempTable[i].index;
         let actualValue = roomValues[personsTempTable[i].row][personsTempTable[i].col];
         let actualPosition = {row: personsTempTable[i].row, col: personsTempTable[i].col, val: actualValue};
 
         if (roomValues[personsTempTable[i].row][personsTempTable[i].col] === 0) {
             personsTempTable.splice(i, 1);
-            indexToRemove = personIndex;
+            indexesToRemove.push(personIndex);
             numberOfSurvivors++;
             document.getElementById("peopleThatEscaped").innerHTML = '' + numberOfSurvivors;
-            i--;
             continue;
         } else if (personTable[personIndex].tries > 1) {
             let newPos = tryToFindRandomMove(actualPosition, newUsedPositions);
@@ -311,7 +339,6 @@ function calculatePersonsNewPositions() {
             personTable[personIndex].col = newPos.col;
             personTable[personIndex].tries = 0;
             newUsedPositions[newPos.row][newPos.col] = 1;
-            i--;
             continue;
         }
 
@@ -320,12 +347,11 @@ function calculatePersonsNewPositions() {
             personsTempTable.splice(i, 1);
             personTable[personIndex].row = newPos.row;
             personTable[personIndex].col = newPos.col;
-            i--;
         }
         newUsedPositions[newPos.row][newPos.col] = 1;
     }
 
-    for (let i = 0; i < personsTempTable.length; i++) {
+    for (let i = personsTempTable.length - 1; i >= 0; i--) {
         let personIndex = personsTempTable[i].index;
 
         let actualValue = roomValues[personsTempTable[i].row][personsTempTable[i].col];
@@ -335,15 +361,14 @@ function calculatePersonsNewPositions() {
             personsTempTable.splice(i, 1);
             personTable[personIndex].row = newPos.row;
             personTable[personIndex].col = newPos.col;
-            i--;
         } else {    // if cant find new position increment person tries counter
             personTable[personIndex].tries++;
         }
         newUsedPositions[newPos.row][newPos.col] = 1;
     }
 
-    if (indexToRemove !== -1) {
-        personTable.splice(indexToRemove, 1);
+    for (let i = 0; i < indexesToRemove.length; i++) {
+        personTable.splice(indexesToRemove[i], 1);
     }
     usedPositions = newUsedPositions;
 }

@@ -127,6 +127,7 @@ function insertHorizontalObstacle() {
 
 function insertDoor() {
     roomValues[doorRow][doorCol] = 0;
+    roomValues[doorRow][doorCol - 1] = getDistanceToDoor(doorRow, doorCol - 1);
 }
 
 function paintRoomSquares() {
@@ -166,6 +167,19 @@ function initPersons() {
 
     let freePositions = getFreePositions();
     let numberOfPersons = Math.min(50, freePositions.length);   // TODO choosed by user
+
+
+    // // test purposes
+    // let person = {col: 22, row: 4, color: "#3366DD", tries: 0};
+    // let person2 = {col: 20, row: 6, color: "#3366DD", tries: 0};
+    // personTable.push(person);
+    // personTable.push(person2);
+    // usedPositions[person.row][person.col] = 1;
+    // usedPositions[person2.row][person2.col] = 1;
+    //
+    // roomValues [5][22] = -2;
+    // roomValues [6][20] = getDistanceToDoor(6, 20);
+
 
     for (let i = 0; i < numberOfPersons; i++) {
         let index = getRandomInt(freePositions.length);
@@ -248,6 +262,9 @@ function calculatePersonsNewPositions() {
     let indexToRemove = -1;
     for (let i = 0; i < personsTempTable.length; i++) {
         let personIndex = personsTempTable[i].index;
+        let actualValue = roomValues[personsTempTable[i].row][personsTempTable[i].col];
+        let actualPosition = {row: personsTempTable[i].row, col: personsTempTable[i].col, val: actualValue};
+
         if (roomValues[personsTempTable[i].row][personsTempTable[i].col] === 0) {
             personsTempTable.splice(i, 1);
             indexToRemove = personIndex;
@@ -255,17 +272,24 @@ function calculatePersonsNewPositions() {
             document.getElementById("peopleThatEscaped").innerHTML = "" + (Number(numberOfSurvivors) + 1);
             i--;
             continue;
+        } else if (personTable[personIndex].tries > 1) {
+            let newPos = tryToFindRandomMove(actualPosition, newUsedPositions);
+            personsTempTable.splice(i, 1);
+            personTable[personIndex].row = newPos.row;
+            personTable[personIndex].col = newPos.col;
+            personTable[personIndex].tries = 0;
+            newUsedPositions[newPos.row][newPos.col] = 1;
+            i--;
+            continue;
         }
 
-        let actualValue = roomValues[personsTempTable[i].row][personsTempTable[i].col];
-        let actualPosition = {row: personsTempTable[i].row, col: personsTempTable[i].col, val: actualValue};
         let newPos = tryToFindSimpleDirection(actualPosition, newUsedPositions);
         if (newPos.val < actualValue) {
             personsTempTable.splice(i, 1);
+            personTable[personIndex].row = newPos.row;
+            personTable[personIndex].col = newPos.col;
             i--;
         }
-        personTable[personIndex].row = newPos.row;
-        personTable[personIndex].col = newPos.col;
         newUsedPositions[newPos.row][newPos.col] = 1;
     }
 
@@ -277,10 +301,12 @@ function calculatePersonsNewPositions() {
         let newPos = tryToFindDiagonalDirection(actualPosition, newUsedPositions);
         if (newPos.val < actualValue) {
             personsTempTable.splice(i, 1);
+            personTable[personIndex].row = newPos.row;
+            personTable[personIndex].col = newPos.col;
             i--;
+        } else {    // if cant find new position increment person tries counter
+            personTable[personIndex].tries++;
         }
-        personTable[personIndex].row = newPos.row;
-        personTable[personIndex].col = newPos.col;
         newUsedPositions[newPos.row][newPos.col] = 1;
     }
 
@@ -318,6 +344,28 @@ function tryToFindDiagonalDirection(actualPosition, newUsedPositions) {
         }
     }
     return actualPosition;
+}
+
+function tryToFindRandomMove(actualPosition, newUsedPositions) {
+    let pRow = actualPosition.row;
+    let pCol = actualPosition.col;
+
+    let minRow = Math.max(pRow - 1, 0);
+    let maxRow = Math.min(pRow + 1, rows - 1);
+
+    let minCol = Math.max(pCol - 1, 0);
+    let maxCol = Math.min(pCol + 1, cols - 1);
+
+    let newPositions = [];
+    for (let row = minRow; row <= maxRow; row++) {
+        for (let col = minCol; col <= maxCol; col++) {
+            let posValue = roomValues[row][col];
+            if (row !== pRow && col !== pCol && posValue >= 0 && usedPositions[row][col] !== 1 && newUsedPositions[row][col] !== 1) {
+                newPositions.push({row: row, col: col});
+            }
+        }
+    }
+    return newPositions[getRandomInt(newPositions.length)];
 }
 
 function checkPosition(row, col, actualValue, newUsedPositions) {

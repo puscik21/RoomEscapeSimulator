@@ -20,9 +20,10 @@ var personTable;
 var rows;
 var cols;
 var usedPositions;
-
 var startPersonsNumber;
 var numberOfSurvivors = 0;
+var areListenersEnabled = true;
+var maxPersonsInside;
 
 
 window.onload = function() {
@@ -34,8 +35,8 @@ window.onload = function() {
     // initRulesTable();
     initChart();
     initRoom();
-    initPersons();
     initListeners();
+    initPersons();
 };
 
 function initRoom() {
@@ -54,8 +55,8 @@ function initRoomValues() {
         roomValues[i] = new Array(cols);
     }
 
-    doorRow = (600 / squareSize) / 2;
-    doorCol = (1200 / squareSize) - 1;
+    doorRow = Math.floor(600 / squareSize / 2);
+    doorCol = Math.floor(1200 / squareSize - 1);
     for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
             if (row === 0 || row === rows -1 || col === 0 || col === cols - 1) {
@@ -169,7 +170,9 @@ function initPersons() {
     }
 
     let freePositions = getFreePositions();
-    let numberOfPersons = Math.min(startPersonsNumber, freePositions.length);
+    maxPersonsInside = freePositions.length;
+    document.getElementById('personsSlider').max = maxPersonsInside; // TODO based on user choice of room size
+    let numberOfPersons = Math.min(startPersonsNumber, maxPersonsInside);
 
 
     // // test purposes
@@ -236,9 +239,13 @@ function updateHTMLPersonsNumbers() {
 }
 
 function initListeners() {
-    document.getElementById('personsSlider').max = 200; // TODO based on user choice of room size
+    startPersonsNumber = document.getElementById('personsSlider').value;
+    document.getElementById('personsSlider').max = maxPersonsInside;
     document.getElementById('personsSlider').addEventListener("input", function () {
-        apply();
+        updateStartPersonsNumber();
+    });
+    document.getElementById('squareSizeSlider').addEventListener("input", function () {
+        updateSquareSize();
     });
 }
 
@@ -389,16 +396,31 @@ function checkPosition(row, col, actualValue, newUsedPositions) {
 
 // ### start button ###
 function start() {
-    if (isPaused && document.getElementById('cellsPerRow').value !== '') {
+    if (isPaused && document.getElementById('cellsPerRow').value !== '') {      // TODO probably nothing to check in textBox
         timer = setTimeout(step, 500);
         isPaused = false;
+        areListenersEnabled = false;
     }
 }
 
-function apply() {
-    startPersonsNumber = document.getElementById('personsSlider').value;
-    document.getElementById('startNumberOfPeopleLabel').innerHTML = "Start number of people: " + startPersonsNumber;
-    initPersons();
+function updateStartPersonsNumber() {
+    if (areListenersEnabled) {
+        startPersonsNumber = document.getElementById('personsSlider').value;
+        document.getElementById('startNumberOfPeopleLabel').innerHTML = "Start number of people: " + startPersonsNumber;
+        initPersons();
+    }
+}
+
+function updateSquareSize() {
+    if (areListenersEnabled) {
+        let newSquareSize = document.getElementById('squareSizeSlider').value;
+        if (document.getElementById('board').height % newSquareSize === 0) {
+            squareSize = newSquareSize;
+            document.getElementById('squareSizeLabel').innerHTML = "Square size: " + squareSize;
+            initRoom();
+            initPersons();
+        }
+    }
 }
 
 // ######## OLD ###############
@@ -531,6 +553,7 @@ function pause() {
     if (!isPaused) {
         clearTimeout(timer);
         isPaused = true;
+        areListenersEnabled = true;
     }
 }
 
